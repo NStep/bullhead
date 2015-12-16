@@ -3287,13 +3287,40 @@ static inline unsigned long task_rlimit_max(const struct task_struct *tsk,
 }
 
 static inline unsigned long rlimit(unsigned int limit)
+/*
+ * Note C-state for (idle) cpus.
+ *
+ * @cstate = cstate index, 0 -> active state
+ * @wakeup_energy = energy spent in waking up cpu
+ * @wakeup_latency = latency to wakeup from cstate
+ *
+ */
+
+void
+sched_set_cpu_cstate(int cpu, int cstate, struct cpuidle_state *cpuidle,
+		     int wakeup_energy, int wakeup_latency)
 {
 	return task_rlimit(current, limit);
 }
+	// TJK: Need to integrate QC cpuidle with EAS (doesn't use standard
+	// cpuidle framework)
+	struct rq *rq = cpu_rq(cpu);
 
 static inline unsigned long rlimit_max(unsigned int limit)
 {
 	return task_rlimit_max(current, limit);
+	idle_set_state_idx(rq, cstate);
+	idle_set_state(rq, cpuidle);
+
+	if ((cstate == 0 && wakeup_energy == 0 && wakeup_latency == 0) ||
+	    (cstate == 1 && cpu < 4 && wakeup_energy == 5800 && wakeup_latency == 50) ||
+	    (cstate == 1 && cpu >= 4 && wakeup_energy == 24120 && wakeup_latency == 60) ||
+	    (cstate == 3 && cpu >= 4 && wakeup_energy == 155775 && wakeup_latency == 475) ||
+	    (cstate == 4 && cpu < 4 && wakeup_energy == 46400 && wakeup_latency == 480) ||
+	    (cstate == 4 && cpu >= 4 && wakeup_energy == 192156 && wakeup_latency == 636)) {
+	} else {
+		pr_info("TJK: CPU%d ->cstate=%d  nrg=%d latency=%d\n", cpu, cstate, wakeup_energy, wakeup_latency);
+	}
 }
 
 #endif
