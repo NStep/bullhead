@@ -166,8 +166,7 @@ static void wake_pwrtrigger(bool camera_trigger) {
 		return;
 
 	if (!camera_trigger)
-		//set_vibrate(vib_strength);
-		return;
+		set_vibrate(vib_strength);
 	else
 		camera = true;
 
